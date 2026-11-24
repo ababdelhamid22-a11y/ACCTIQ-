@@ -30,9 +30,34 @@ jobs:
         run: npx cap add android
       - name: Sync web assets
         run: npx cap sync android
-      - name: Build debug APK
+      - name: Build APKs
         working-directory: frontend/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
+      - name: Sign release APK
+        working-directory: frontend/android/app/build/outputs/apk/release
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > ks.jks
+            PASS="$KEYSTORE_PASSWORD"; ALIAS="$KEY_ALIAS"
+          else
+            echo "No keystore secret: generating a one-off key (updates will require uninstalling first)"
+            PASS="acctiq-temp-pass"; ALIAS="acctiq"
+            keytool -genkeypair -keystore ks.jks -storepass "$PASS" -keypass "$PASS" \
+              -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=ACCTIQ"
+          fi
+          "$BT/zipalign" -p -f 4 app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks ks.jks --ks-pass "pass:$PASS" --key-pass "pass:$PASS" \
+            --ks-key-alias "$ALIAS" --out acctiq-release.apk aligned.apk
+          "$BT/apksigner" verify acctiq-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acctiq-release-apk
+          path: frontend/android/app/build/outputs/apk/release/acctiq-release.apk
       - uses: actions/upload-artifact@v4
         with:
           name: acctiq-debug-apk
