@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+# Audit log (runtime data, may contain business facts)
+audit_log.jsonl
+*.jsonl
+# Node
+node_modules/
+dist/
+# Env / OS / editors
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/

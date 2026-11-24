@@ -1,0 +1,27 @@
+{
+  "pipeline": [
+    "Transaction",
+    "Facts",
+    "Applicability",
+    "Standard/Version",
+    "Alternatives",
+    "Scoring",
+    "Treatment",
+    "Journal",
+    "Financial Impact",
+    "Human Approval",
+    "Audit"
+  ],
+  "alternative_statuses": [
+    "PREFERRED",
+    "CONDITIONAL",
+    "REJECTED",
+    "ESCALATE"
+  ],
+  "guardrails": [
+    "AI is not the accounting authority",
+    "Do not invent EAS rules",
+    "Human approval required",
+    "Confidence measures evidence completeness/rule match quality"
+  ]
+}
