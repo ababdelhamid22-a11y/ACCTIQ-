@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: acctiq-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: ACCTIQ_CORS_ORIGINS
+        value: https://localhost,http://localhost,http://localhost:5173
+      - key: ACCTIQ_AUDIT_FILE
+        value: /tmp/audit_log.jsonl
