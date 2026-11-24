@@ -1,0 +1,32 @@
+name: Deploy backend to Hugging Face
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/**"
+      - "backend/requirements.txt"
+      - "hf/**"
+      - ".github/workflows/hf-space.yml"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push backend to the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE" ]; then
+            echo "HF_TOKEN secret or HF_SPACE variable is missing - skipping deploy."; exit 0
+          fi
+          mkdir space
+          cp -r backend/app backend/requirements.txt hf/Dockerfile space/
+          find space -name __pycache__ -type d -prune -exec rm -rf {} +
+          printf -- '---\ntitle: ACCTIQ API\nemoji: 📊\ncolorFrom: blue\ncolorTo: green\nsdk: docker\napp_port: 7860\npinned: false\n---\n\nACCTIQ backend (FastAPI).\n' > space/README.md
+          cd space
+          git init -q -b main
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "Deploy from GitHub ${GITHUB_SHA}"
+          git push -f "https://${HF_SPACE%%/*}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main
